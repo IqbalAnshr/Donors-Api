@@ -8,7 +8,8 @@ const logger = require('morgan');
 
 
 const app = express(); 
-const PORT = process.env.PORT || 3000; 
+const PORT = process.env.PORT || 3000;
+const URL = process.env.URL;
 
 app.use(logger('dev')); 
 
@@ -39,5 +40,5 @@ app.use((req, res, next) => {
 app.use('/api', route);
 
 app.listen(PORT, () => { 
-    console.log(`Server is running on url http://localhost:${PORT} port: ${PORT}`); 
+    console.log(`Server is running on url ${URL}:${PORT} port: ${PORT}`); 
 });
