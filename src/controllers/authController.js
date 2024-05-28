@@ -12,7 +12,7 @@ module.exports = {
         auth: true,
         id: user.id,
         accessToken: token,
-        refreshToken: null,
+        refreshToken: refreshToken,
         message: 'User registered successfully!',
         errors: null,
       });
