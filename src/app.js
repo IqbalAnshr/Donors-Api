@@ -5,13 +5,21 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const swaggerUi = require('swagger-ui-express');
+const fs = require('fs');
+const path = require('path');
 
 
-const app = express(); 
+const app = express();
 const PORT = process.env.PORT || 3000;
 const URL = process.env.URL;
 
-app.use(logger('dev')); 
+const swaggerFilePath = path.join(__dirname, './docs/donorDoc.json');
+const swaggerDocument = JSON.parse(fs.readFileSync(swaggerFilePath, 'utf8'));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+app.use(logger('dev'));
 
 app.use(bodyParser.json());
 

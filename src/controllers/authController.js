@@ -8,21 +8,21 @@ module.exports = {
       console.log(req.body);
       const { user, token, refreshToken } = await AuthService.signup(userData);
 
-      res.status(200).send({
+      res.status(201).send({
         auth: true,
-        id: user.id,
-        accessToken: token,
-        refreshToken: refreshToken,
         message: 'User registered successfully!',
-        errors: null,
+        data: {
+          id: user.id,
+          accessToken: token,
+          refreshToken: refreshToken
+        }
       });
 
     } catch (error) {
       res.status(500).send({
         auth: false,
-        id: req.body.id,
         message: 'Error creating user',
-        errors: error.message
+        errors: [error.message],
       });
     }
   },
@@ -34,19 +34,18 @@ module.exports = {
 
       res.status(200).send({
         auth: true,
-        id: user.id,
-        accessToken: token,
-        refreshToken: refreshToken,
-        message: 'Success',
-        errors: null
+        message: 'Successfully Logged In',
+        data: {
+          id: user.id,
+          accessToken: token,
+          refreshToken: refreshToken,
+        }
       });
     } catch (error) {
       res.status(500).send({
         auth: false,
-        id: req.body.id,
-        accessToken: null,
-        message: 'Error',
-        errors: error.message
+        message: 'Error While Logging In',
+        errors: [error.message],
       });
     }
   },
@@ -57,31 +56,34 @@ module.exports = {
       await AuthService.signout(token);
       res.status(200).send({
         auth: false,
-        id: req.body.id,
-        accessToken: null,
-        refreshToken: null,
-        message: 'Success',
-        errors: null
+        message: 'Successfully Logged Out',
       });
     } catch (error) {
       res.status(500).send({
         auth: false,
-        id: req.body.id,
-        accessToken: null,
-        refreshToken: null,
-        message: 'Error',
-        errors: error.message 
+        message: 'Error While Logging Out',
+        errors: [error.message],
       });
     }
   },
 
   async refreshToken(req, res) {
     try {
-      const  token  = req.body.token;
+      const token = req.body.token;
       const AccessToken = await AuthService.refreshToken(token);
-      res.json({ AccessToken });
+      res.status(200).send({
+        auth: true,
+        message: 'Successfully Refreshed Token',
+        data: {
+          accessToken: AccessToken
+        }
+      });
     } catch (error) {
-      res.status(403).json({ message: error.message });
+      res.status(403).send({
+        auth: false,
+        message: 'Error While Refreshing Token',
+        errors: [error.message],
+      })
     }
   }
 };

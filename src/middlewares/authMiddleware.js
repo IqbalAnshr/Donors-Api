@@ -9,8 +9,8 @@ module.exports = {
         body("username")
             .isString()
             .withMessage("Username must be a string")
-            .isLength({ min: 3 })
-            .withMessage("Username must be at least 3 characters long")
+            .isLength({ min: 5 })
+            .withMessage("Username must be at least 5 characters long")
             .matches(/^[a-zA-Z0-9_-]+$/)
             .withMessage(
                 "Username can only contain letters, numbers, underscores, and dashes"
@@ -46,7 +46,7 @@ module.exports = {
             if (!errors.isEmpty()) {
                 return res
                     .status(400)
-                    .json({ auth: false, message: "Error", errors: errors.array() });
+                    .json({ auth: false, message: "Error Validation", errors: errors.array() });
             }
             next();
         },
@@ -65,162 +65,147 @@ module.exports = {
             if (!errors.isEmpty()) {
                 return res
                     .status(400)
-                    .json({ auth: false, message: "Error", errors: errors.array() });
+                    .json({ auth: false, message: "Error Validation", errors: errors.array() });
             }
             next();
         },
     ],
 
-    checkDuplicateUserNameOrEmail(req, res, next) {
-        User.findOne({
-            where: {
-                email: req.body.email,
-            },
-        })
-            .then((userWithEmail) => {
-                if (userWithEmail) {
-                    return res.status(400).send({
-                        auth: false,
-                        id: req.body.id,
-                        message: "Error",
-                        errors: "Email is already taken!",
-                    });
-                } else {
-                    User.findOne({
-                        where: {
-                            username: req.body.username,
-                        },
-                    })
-                        .then((userWithUsername) => {
-                            if (userWithUsername) {
-                                return res.status(400).send({
-                                    auth: false,
-                                    id: req.body.id,
-                                    message: "Error",
-                                    errors: "Username is already taken!",
-                                });
-                            } else {
-                                // Lanjut ke langkah berikutnya setelah memastikan username unik
-                                next();
-                            }
-                        })
-                        .catch((error) => {
-                            // Tangani kesalahan pencarian pengguna dengan username
-                            console.error("Error searching for user by username:", error);
-                            return res.status(500).send({
-                                auth: false,
-                                id: req.body.id,
-                                message: "Error",
-                                errors: "Internal server error",
-                            });
-                        });
-                }
-            })
-            .catch((error) => {
-                // Tangani kesalahan pencarian pengguna dengan email
-                console.error("Error searching for user by email:", error);
-                return res.status(500).send({
-                    auth: false,
-                    id: req.body.id,
-                    message: "Error",
-                    errors: "Internal server error",
+    async checkDuplicateUserNameOrEmail(req, res, next) {
+        try {
+            const { email, username } = req.body;
+
+            const userWithEmail = await User.findOne({ where: { email } });
+            if (userWithEmail) {
+                return res.status(409).json({
+                    status: 'error',
+                    message: 'Email is already taken!',
+                    errors: [],
                 });
+            }
+
+            const userWithUsername = await User.findOne({ where: { username } });
+            if (userWithUsername) {
+                return res.status(409).json({
+                    status: 'error',
+                    message: 'Username is already taken!',
+                    errors: [],
+                });
+            }
+
+            next();
+        } catch (error) {
+            console.error('Error checking duplicate username or email:', error);
+            return res.status(500).json({
+                status: 'error',
+                message: 'Internal server error',
+                errors: [error.message],
             });
+        }
     },
 
     // Middleware untuk cek role yang ada
-    checkRolesExisted(req, res, next) {
-        const role = req.body.role.toUpperCase();
-        if (!ROLEs.includes(role)) {
-            return res.status(400).send({
-                auth: false,
-                id: req.body.id,
-                message: "Error",
-                errors: "Invalid Role: " + role,
+    async checkRolesExisted(req, res, next) {
+        try {
+            const role = req.body.role.toUpperCase();
+            if (!ROLEs.includes(role)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: `Invalid Role: ${role}`,
+                    errors: [],
+                });
+            }
+            next();
+        } catch (error) {
+            console.error('Error in checkRolesExisted:', error);
+            return res.status(500).json({
+                status: 'error',
+                message: 'Internal server error',
+                errors: [error.message],
             });
         }
-        next();
     },
 
-    // Middleware untuk autentikasi
-    Authentication: async (req, res, next) => {
-        let tokenHeader = req.headers["x-access-token"];
-        
-        if (!tokenHeader) {
-            return res.status(403).send({
-                auth: false,
-                message: "Error",
-                errors: "No token provided",
-            });
-        }
-
-        if (!tokenHeader.startsWith("Bearer ")) {
-            return res.status(500).send({
-                auth: false,
-                message: "Error",
-                errors: "Incorrect token format",
-            });
-        }
-
-        let token = tokenHeader.split(" ")[1];
-
-        jwt.verify(token, config.secret, async (err, decoded) => {
-            if (err) {
-                return res.status(500).send({
-                    auth: false,
-                    message: "Error",
-                    errors: err,
+    async Authentication(req, res, next) {
+        try {
+            const tokenHeader = req.headers['x-access-token'];
+            if (!tokenHeader) {
+                return res.status(403).json({
+                    status: 'error',
+                    message: 'No token provided',
+                    errors: [],
                 });
             }
 
-            try {
+            if (!tokenHeader.startsWith('Bearer ')) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Incorrect token format',
+                    errors: [],
+                });
+            }
+
+            const token = tokenHeader.split(' ')[1];
+
+            jwt.verify(token, config.secret, async (err, decoded) => {
+                if (err) {
+                    return res.status(401).json({
+                        status: 'error',
+                        message: 'Unauthorized',
+                        errors: [err.message],
+                    });
+                }
+
                 const user = await User.findByPk(decoded.id);
                 if (!user) {
-                    return res
-                        .status(404)
-                        .send({ auth: false, message: "User not found" });
+                    return res.status(404).json({
+                        status: 'error',
+                        message: 'User not found',
+                        errors: [],
+                    });
                 }
-                req.user = user; 
+
+                req.user = user;
                 next();
-            } catch (error) {
-                return res.status(500).send({
-                    auth: false,
-                    message: "Error",
-                    errors: error,
-                });
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Error in Authentication:', error);
+            return res.status(500).json({
+                status: 'error',
+                message: 'Internal server error',
+                errors: [error.message],
+            });
+        }
     },
 
-    // Middleware untuk cek peran admin
-    isAdmin(req, res, next) {
-        User.findByPk(req.userid, { include: "Roles" })
-            .then((user) => {
-                if (!user) {
-                    return res.status(404).send({
-                        auth: false,
-                        message: "Error",
-                        errors: "User not found",
-                    });
-                }
-                const roles = user.Roles.map((role) => role.name.toUpperCase());
-                if (roles.includes("ADMIN")) {
-                    next();
-                } else {
-                    res.status(403).send({
-                        auth: false,
-                        message: "Error",
-                        errors: "Require Admin Role",
-                    });
-                }
-            })
-            .catch((err) => {
-                res.status(500).send({
-                    auth: false,
-                    message: "Error",
-                    errors: err.message,
+    async isAdmin(req, res, next) {
+        try {
+            const user = await User.findByPk(req.user.id, { include: 'Roles' });
+            if (!user) {
+                return res.status(404).json({
+                    status: 'error',
+                    message: 'User not found',
+                    errors: [],
                 });
             }
-        );
+
+            const roles = user.Roles.map(role => role.name.toUpperCase());
+            if (roles.includes('ADMIN')) {
+                next();
+            } else {
+                return res.status(403).json({
+                    status: 'error',
+                    message: 'Require Admin Role',
+                    errors: [],
+                });
+            }
+        } catch (error) {
+            console.error('Error in isAdmin:', error);
+            return res.status(500).json({
+                status: 'error',
+                message: 'Internal server error',
+                errors: [error.message],
+            });
+        }
     },
 };
