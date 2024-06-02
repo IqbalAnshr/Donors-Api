@@ -21,7 +21,7 @@ module.exports = {
         (req, res, next) => {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(400).json({ auth: false, message: "Error", errors: errors.array() });
+                return res.status(400).json({ status : 'error', message: "Error Validation", errors: errors.array() });
             }
             next();
         }
@@ -33,7 +33,7 @@ module.exports = {
         (req, res, next) => {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(400).json({ auth: false, message: "Error", errors: errors.array() });
+                return res.status(400).json({ status : 'error' , message: "Error Validation", errors: errors.array() });
             }
             next();
         }
@@ -42,7 +42,7 @@ module.exports = {
     // cek apakah user sudah punya alamat id
     checkUserHasAddres (req, res, next) {
         if (req.user.addressId) {
-            return res.status(400).json({ auth: false, message: "Error", errors: "User already has an address" });
+            return res.status(400).json({ status : 'error', message: "User already has an address", errors: [] });
         }
         next();
     }

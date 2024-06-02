@@ -1,5 +1,7 @@
 const { body, validationResult } = require('express-validator');
 const User = require('../database/models').User;
+const db = require('../database/models');
+const { where } = require('sequelize');
 
 module.exports = {
     validateRequest: [
@@ -23,4 +25,19 @@ module.exports = {
             next();
         }
     ],
+
+    checkUserHasRequestId: async (req, res, next) => {
+        try {
+            const userRequest = await db.Request.findOne({ where: { id: req.params.requestId }, attributes: ['userId'] });
+
+            if (!userRequest || userRequest.userId !== req.user.id) {
+                return res.status(400).json({ status: 'error', message: 'User does not have this request', errors: [] });
+            }
+
+            next();
+        } catch (error) {
+            console.error('Error in checkUserRequestId:', error);
+            return res.status(500).json({ status: 'error', message: 'Internal server error', errors: [error.message] });
+        }
+    }
 }

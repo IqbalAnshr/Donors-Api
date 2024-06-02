@@ -6,8 +6,8 @@ const donorController = require('../controllers/donorController');
 
 const { validateUpdateProfile, checkDuplicateUserName, checkDuplicateEmail }= require('../middlewares/userMiddleware');
 const {validateAddress, validateUpdateAddress, checkUserHasAddres} = require('../middlewares/addressMiddleware');
-const { validateRequest } = require('../middlewares/requestMiddleware');
-const { validateDonation, validateUpdateDonation } = require('../middlewares/donorMiddleware');
+const { validateRequest, checkUserHasRequestId } = require('../middlewares/requestMiddleware');
+const { validateDonation, validateUpdateDonation, checkUserHasIdDonor } = require('../middlewares/donorMiddleware');
 
 
 const router = express.Router();
@@ -26,16 +26,16 @@ router.put('/address', validateUpdateAddress, AddressController.updateAddress);
 router.delete('/address', AddressController.deleteAddress);
 
 router.post('/request', validateRequest, requestController.createRequest);
-router.get('/request/:requestId',  requestController.getUserRequestById);
+router.get('/request/:requestId', checkUserHasRequestId, requestController.getUserRequestById);
 router.get('/request',  requestController.getUserRequests);
-router.put('/request/:requestId',  requestController.updateRequest);
-router.delete('/request/:requestId',  requestController.deleteRequest);
+router.put('/request/:requestId', checkUserHasRequestId, requestController.updateRequest);
+router.delete('/request/:requestId',checkUserHasRequestId,  requestController.deleteRequest);
 
 router.post('/donor', validateDonation, donorController.createDonor);
-router.get('/donor/:donorId',  donorController.getUserDonorById);
+router.get('/donor/:donorId', checkUserHasIdDonor, donorController.getUserDonorById);
 router.get('/donor',  donorController.getUserDonors);
-router.put('/donor/:donorId',validateUpdateDonation,  donorController.updateDonor);
-router.delete('/donor/:donorId',  donorController.deleteDonor);
+router.put('/donor/:donorId',[validateUpdateDonation, checkUserHasIdDonor],donorController.updateDonor);
+router.delete('/donor/:donorId', checkUserHasIdDonor ,donorController.deleteDonor);
 
 
 module.exports = router;

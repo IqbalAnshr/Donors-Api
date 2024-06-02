@@ -43,10 +43,10 @@ module.exports = {
         User.findOne({ where: { username: req.body.username } })
             .then(user => {
                 if (user) {
-                    return res.status(400).send({
-                        auth: false,
-                        message: "Error",
-                        errors: "Username already exists"
+                    return res.status(409).send({
+                        status: 'error',
+                        message: 'Username is already taken!',
+                        errors: [],
                     });
                 }
                 next();
@@ -67,10 +67,10 @@ module.exports = {
         User.findOne({ where: { email: req.body.email } })
             .then(user => {
                 if (user) {
-                    return res.status(400).send({
-                        auth: false,
-                        message: "Error",
-                        errors: "Email already exists"
+                    return res.status(409).send({
+                        status: 'error',
+                        message: 'Email is already taken!',
+                        errors: [],
                     });
                 }
                 next();
