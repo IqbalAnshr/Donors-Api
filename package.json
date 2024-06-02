@@ -24,7 +24,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon ./src/app.js",
-    "start": "node ./src/app.js"
+    "start": "node ./src/app.js",
+    "migrate": "sequelize db:migrate",
+    "postinstall": "npm run migrate"
   },
   "keywords": [],
   "author": "",
