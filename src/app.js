@@ -12,7 +12,6 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const URL = process.env.URL;
 
 const swaggerFilePath = path.join(__dirname, './docs/donorDoc.json');
 const swaggerDocument = JSON.parse(fs.readFileSync(swaggerFilePath, 'utf8'));
@@ -48,5 +47,5 @@ app.use((req, res, next) => {
 app.use('/api', route);
 
 app.listen(PORT, () => { 
-    console.log(`Server is running on url ${URL}:${PORT} port: ${PORT}`); 
+    console.log(`Server is running on the port: ${PORT}`); 
 });
