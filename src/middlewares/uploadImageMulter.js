@@ -7,7 +7,11 @@ db = require('../database/models');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, config.uploadDirectory); 
+    const uploadDir = config.uploadDirectory;
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     cb(null, `${req.user.id}-${Date.now()}-${file.originalname}`); 
