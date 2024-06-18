@@ -136,7 +136,7 @@ module.exports = {
                     errors: [],
                 });
             }
-
+    
             if (!tokenHeader.startsWith('Bearer ')) {
                 return res.status(400).json({
                     status: 'error',
@@ -144,9 +144,30 @@ module.exports = {
                     errors: [],
                 });
             }
-
+    
             const token = tokenHeader.split(' ')[1];
-
+    
+            // Decode the token to get its expiration time
+            const decodedToken = jwt.decode(token);
+            if (!decodedToken || !decodedToken.exp) {
+                return res.status(401).json({
+                    status: 'error',
+                    message: 'Invalid token',
+                    errors: [],
+                });
+            }
+    
+            // Check if the token is expired
+            const currentTime = Math.floor(Date.now() / 1000);
+            if (decodedToken.exp < currentTime) {
+                return res.status(401).json({
+                    status: 'error',
+                    message: 'Token expired',
+                    errors: [],
+                });
+            }
+    
+            // Verify the token
             jwt.verify(token, config.secret, async (err, decoded) => {
                 if (err) {
                     return res.status(401).json({
@@ -155,7 +176,7 @@ module.exports = {
                         errors: [err.message],
                     });
                 }
-
+    
                 const user = await User.findByPk(decoded.id);
                 if (!user) {
                     return res.status(404).json({
@@ -164,7 +185,7 @@ module.exports = {
                         errors: [],
                     });
                 }
-
+    
                 req.user = user;
                 next();
             });
