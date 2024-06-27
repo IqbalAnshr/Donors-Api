@@ -12,60 +12,75 @@ const donorService = {
     }
   },
 
-  async getAllDonors( query ) {
+  async getAllDonors(query) {
     try {
-    const { page = 1, limit = 10, search = '', sort = 'desc', filterField = '', filterValue = '' } = query;
+      const { page = 1, limit = 10, search = '', sort = 'desc', filterField = '', filterValue = '' } = query;
 
-    const options = {
-      order: [['createdAt', sort.toUpperCase()]], 
-      limit: parseInt(limit, 10),
-      offset: (page - 1) * limit,
-      include: [{ model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber'] }],
-    }
-
-    let whereClause = {};
-
-    if (search) {
-      whereClause = {
-        [Op.or]: [
-          { '$User.name$': { [Op.like]: `%${search}%` } },
-        ],
-      };
-    }
-
-    if (filterField && filterValue) {
-      if (Object.keys(whereClause).length) {
-        whereClause = {
-          [Op.and]: [
-            whereClause,
-            { [filterField]: { [Op.like]: `%${filterValue}%` } }
+      const options = {
+        order: [['createdAt', sort.toUpperCase()]],
+        limit: parseInt(limit, 10),
+        offset: (page - 1) * limit,
+        include: [{
+          model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber'], include: [
+            {
+              model: db.Address,
+              attributes: ['city', 'district']
+            }
           ]
-        };
-      } else {
+        }],
+      }
+
+      let whereClause = {};
+
+      if (search) {
         whereClause = {
-          [filterField]: { [Op.like]: `%${filterValue}%` }
+          [Op.or]: [
+            { '$User.name$': { [Op.like]: `%${search}%` } },
+          ],
         };
       }
+
+      if (filterField && filterValue) {
+        if (Object.keys(whereClause).length) {
+          whereClause = {
+            [Op.and]: [
+              whereClause,
+              { [filterField]: { [Op.like]: `%${filterValue}%` } }
+            ]
+          };
+        } else {
+          whereClause = {
+            [filterField]: { [Op.like]: `%${filterValue}%` }
+          };
+        }
+      }
+
+      options.where = whereClause;
+
+      const requests = await db.Donor.findAndCountAll(options);
+
+      return {
+        totalItems: requests.count,
+        totalPages: Math.ceil(requests.count / limit),
+        currentPage: parseInt(page, 10),
+        data: requests.rows,
+      };
+    } catch (error) {
+      throw error;
     }
-
-    options.where = whereClause;
-
-    const requests = await db.Donor.findAndCountAll(options);
-
-    return {
-      totalItems: requests.count,
-      totalPages: Math.ceil(requests.count / limit),
-      currentPage: parseInt(page, 10),
-      data: requests.rows,
-    };
-  } catch (error) {
-    throw error;
-  }
   },
 
   async getDonorById(donorId) {
     try {
-      const donor = await db.Donor.findByPk(donorId, { include: [{ model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber'] }] });
+      const donor = await db.Donor.findByPk(donorId, {
+        include: [{
+          model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber'], include: [
+            {
+              model: db.Address,
+              attributes: ['city', 'district']
+            }]
+        }]
+      });
       if (!donor) {
         throw new Error('Donor not found');
       }
@@ -76,7 +91,7 @@ const donorService = {
   },
 
   async getUserDonors(userId) {
-   try {
+    try {
       const donors = await db.Donor.findAll({ where: { userId } });
       return donors;
     } catch (error) {
