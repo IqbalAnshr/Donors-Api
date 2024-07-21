@@ -8,10 +8,22 @@ const logger = require('morgan');
 const swaggerUi = require('swagger-ui-express');
 const fs = require('fs');
 const path = require('path');
+const socketIo = require('socket.io');
+const http = require('http');
+
+const socketService = require('./services/socketService');
 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: '*',
+    }
+});
+
+socketService.initializeSocket(io);
 
 const swaggerFilePath = path.join(__dirname, './docs/donorDoc.json');
 const swaggerDocument = JSON.parse(fs.readFileSync(swaggerFilePath, 'utf8'));
@@ -28,7 +40,7 @@ app.use(cookieParser());
 
 app.use(cors());
 
-app.use('/profilePictures', express.static('uploads/profile_pictures')); 
+app.use('/profilePictures', express.static('uploads/profile_pictures'));
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
@@ -43,9 +55,14 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use((req, res, next) => {
+    res.io = io;
+    next();
+});
+
 
 app.use('/api', route);
 
-app.listen(PORT, () => { 
-    console.log(`Server is running on the port: ${PORT}`); 
+server.listen(PORT, () => {
+    console.log(`Server is running on the port: ${PORT}`);
 });

@@ -136,7 +136,7 @@ module.exports = {
                     errors: [],
                 });
             }
-    
+
             if (!tokenHeader.startsWith('Bearer ')) {
                 return res.status(400).json({
                     status: 'error',
@@ -144,9 +144,9 @@ module.exports = {
                     errors: [],
                 });
             }
-    
+
             const token = tokenHeader.split(' ')[1];
-    
+
             // Decode the token to get its expiration time
             const decodedToken = jwt.decode(token);
             if (!decodedToken || !decodedToken.exp) {
@@ -156,7 +156,7 @@ module.exports = {
                     errors: [],
                 });
             }
-    
+
             // Check if the token is expired
             const currentTime = Math.floor(Date.now() / 1000);
             if (decodedToken.exp < currentTime) {
@@ -166,7 +166,7 @@ module.exports = {
                     errors: [],
                 });
             }
-    
+
             // Verify the token
             jwt.verify(token, config.secret, async (err, decoded) => {
                 if (err) {
@@ -176,7 +176,7 @@ module.exports = {
                         errors: [err.message],
                     });
                 }
-    
+
                 const user = await User.findByPk(decoded.id);
                 if (!user) {
                     return res.status(404).json({
@@ -185,7 +185,7 @@ module.exports = {
                         errors: [],
                     });
                 }
-    
+
                 req.user = user;
                 next();
             });
@@ -196,6 +196,53 @@ module.exports = {
                 message: 'Internal server error',
                 errors: [error.message],
             });
+        }
+    },
+
+    async socketAuthentication(socket, next) {
+        try {
+            const tokenHeader = socket.handshake.auth['x-access-token'];
+            console.log(tokenHeader);
+            
+            if (!tokenHeader) {
+                return next(new Error('No token provided'));
+            }
+
+            if (!tokenHeader.startsWith('Bearer ')) {
+                return next(new Error('Incorrect token format'));
+            }
+
+            const token = tokenHeader.split(' ')[1];
+
+            // Decode the token to get its expiration time
+            const decodedToken = jwt.decode(token);
+            if (!decodedToken || !decodedToken.exp) {
+                return next(new Error('Invalid token'));
+            }
+
+            // Check if the token is expired
+            const currentTime = Math.floor(Date.now() / 1000);
+            if (decodedToken.exp < currentTime) {
+                return next(new Error('Token expired'));
+            }
+
+            // Verify the token
+            jwt.verify(token, config.secret, async (err, decoded) => {
+                if (err) {
+                    return next(new Error('Unauthorized'));
+                }
+
+                const user = await User.findByPk(decoded.id);
+                if (!user) {
+                    return next(new Error('User not found'));
+                }
+
+                socket.user = user;
+                next();
+            });
+        } catch (error) {
+            console.error('Error in Authentication:', error);
+            return next(new Error('Internal server error'));
         }
     },
 
