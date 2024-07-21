@@ -42,11 +42,31 @@ module.exports = {
         }
       });
     } catch (error) {
-      res.status(500).send({
-        auth: false,
-        message: 'Error While Logging In',
-        errors: [error.message],
-      });
+
+      if (error.message === 'User Not Found') {
+        return res.status(404).send({
+          auth: false,
+          message: 'User Not Found',
+          errors: [error.message],
+        });
+      }
+
+      if (error.message === 'Invalid Password') {
+        return res.status(401).send({
+          auth: false,
+          message: 'Invalid Password',
+          errors: [error.message],
+        });
+      }
+
+      if (error.message === 'Error While Logging In') {
+        return res.status(500).send({
+          auth: false,
+          message: 'Error While Logging In',
+          errors: [error.message],
+        });
+      }
+     
     }
   },
 
