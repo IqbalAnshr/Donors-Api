@@ -11,7 +11,7 @@ const requestService = {
       order: [['createdAt', sort.toUpperCase()]], 
       limit: parseInt(limit, 10),
       offset: (page - 1) * limit,
-      include: [{ model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber'] }],
+      include: [{ model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber', 'profilePicturePath'] }],
     }
 
     let whereClause = {};
@@ -53,7 +53,7 @@ const requestService = {
   },
 
   async getRequestById(requestId) {
-    const request = await db.Request.findByPk(requestId, { include: [{ model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber'] }] });
+    const request = await db.Request.findByPk(requestId, { include: [{ model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber', 'profilePicturePath'] }] });
     if (!request) {
       throw new Error('Request not found');
     }

@@ -21,7 +21,7 @@ const donorService = {
         limit: parseInt(limit, 10),
         offset: (page - 1) * limit,
         include: [{
-          model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber'], include: [
+          model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber', 'profilePicturePath'], include: [
             {
               model: db.Address,
               attributes: ['city', 'district']
@@ -74,7 +74,7 @@ const donorService = {
     try {
       const donor = await db.Donor.findByPk(donorId, {
         include: [{
-          model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber'], include: [
+          model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber', 'profilePicturePath'], include: [
             {
               model: db.Address,
               attributes: ['city', 'district']
