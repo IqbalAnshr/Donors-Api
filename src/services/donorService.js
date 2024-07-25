@@ -36,6 +36,7 @@ const donorService = {
         whereClause = {
           [Op.or]: [
             { '$User.name$': { [Op.like]: `%${search}%` } },
+            { '$User.Address.city$': { [Op.like]: `%${search}%` } }
           ],
         };
       }

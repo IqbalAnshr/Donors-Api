@@ -8,7 +8,7 @@ const requestService = {
     const { page = 1, limit = 10, search = '', sort = 'desc', filterField = '', filterValue = '' } = query;
 
     const options = {
-      order: [['createdAt', sort.toUpperCase()]], 
+      order: [['createdAt', sort.toUpperCase()]],
       limit: parseInt(limit, 10),
       offset: (page - 1) * limit,
       include: [{ model: db.User, attributes: ['id', 'name', 'email', 'phoneNumber', 'profilePicturePath'] }],
@@ -21,6 +21,7 @@ const requestService = {
         [Op.or]: [
           { '$User.name$': { [Op.like]: `%${search}%` } },
           { hospital: { [Op.like]: `%${search}%` } },
+          { city: { [Op.like]: `%${search}%` } }
         ],
       };
     }
@@ -104,15 +105,15 @@ const requestService = {
   },
 
   async deleteRequest(requestId) {
-   try {
-     const request = await db.Request.findByPk(requestId);
-     if (!request) {
-       throw new Error('Request not found');
-     }
-     await request.destroy();
-   } catch (error) {
-     throw error;
-   }
+    try {
+      const request = await db.Request.findByPk(requestId);
+      if (!request) {
+        throw new Error('Request not found');
+      }
+      await request.destroy();
+    } catch (error) {
+      throw error;
+    }
   }
 };
 
